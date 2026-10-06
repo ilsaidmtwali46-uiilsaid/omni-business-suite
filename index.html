@@ -3,154 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omni Business Suite</title>
-  <link rel="stylesheet" href="c.css">
+  <title>نظام الكاشير والمبيعات</title>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --bg-card: #1e1e1e;
+      --primary: #007bff;
+      --text: #ffffff;
+      --border: #333333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      padding: 20px;
+      padding-bottom: 60px; /* مساحة للشريط الدعائي في الأسفل */
+      direction: rtl;
+    }
+
+    .app-header {
+      background-color: var(--bg-card);
+      padding: 15px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .main-content {
+      background-color: var(--bg-card);
+      padding: 25px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    /* الشريط الدعائي أسفل الشاشة */
+    #ad-banner-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #1e1e1e;
+      color: #ffeb3b;
+      padding: 8px 0;
+      border-top: 2px solid var(--primary);
+      z-index: 99999;
+      font-weight: bold;
+    }
+
+    /* شاشة الحظر عند انتهاء الاشتراك */
+    #subscription-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 10, 0.96);
+      z-index: 999999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 15px;
+      border: 1px solid #333;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .btn-renew {
+      width: 100%;
+      padding: 12px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .btn-renew:hover {
+      background: #218838;
+    }
+  </style>
 </head>
 <body>
 
-  <div class="container">
-
-    <!-- الشريط الدعائي المتحرك -->
-    <div id="ticker-bar" style="background: #1565c0; color: #fff; padding: 6px 10px; font-size: 13px; overflow: hidden; white-space: nowrap; margin-bottom: 10px; border-radius: 6px; display: none;">
-      <marquee id="ticker-text" behavior="scroll" direction="right"></marquee>
-    </div>
-
-    <!-- هيدر النظام وزر طلب التجديد -->
-    <header class="card header-box">
-      <div>
-        <h2>نظام إدارة الأعمال (OBS)</h2>
-        <span id="sub-status-tag" class="status-tag" style="margin-top: 5px; display: inline-block;">جاري التحقق من الاشتراك...</span>
-      </div>
-      <button class="btn btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="requestRenewal()">طلب تجديد الاشتراك</button>
-    </header>
-
-    <!-- أزرار التنقل الرئيسية -->
-    <div class="grid nav-buttons">
-      <button class="btn" onclick="showSection('sales')">شاشة المبيعات</button>
-      <button class="btn btn-secondary" onclick="showSection('inventory')">المخزن والمعروضات</button>
-      <button class="btn btn-success" onclick="showSection('reports')">التقارير والسجلات</button>
-    </div>
-
-    <!-- قسم شاشة المبيعات -->
-    <section id="sec-sales" class="card">
-      <h3>إضافة فاتورة جديدة</h3>
-      <div class="form-grid">
-        <div class="input-group">
-          <label>اسم المنتج/الصنف:</label>
-          <input type="text" id="item-name" placeholder="أدخل اسم المنتج">
-        </div>
-        <div class="input-group">
-          <label>الكمية:</label>
-          <input type="number" id="item-qty" min="1" placeholder="1">
-        </div>
-        <div class="input-group">
-          <label>السعر:</label>
-          <input type="number" id="item-price" placeholder="0.00">
-        </div>
-      </div>
-      <button class="btn btn-success submit-btn" onclick="addInvoiceItem()">إضافة للفاتورة</button>
-
-      <div class="table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>المنتج</th>
-              <th>الكمية</th>
-              <th>السعر</th>
-              <th>الإجمالي</th>
-              <th>إجراء</th>
-            </tr>
-          </thead>
-          <tbody id="invoice-list"></tbody>
-        </table>
-      </div>
-
-      <button class="btn btn-success" style="margin-top: 15px;" onclick="saveInvoice()">حفظ وإغلاق الفاتورة</button>
-    </section>
-
-    <!-- قسم المخزن والمعروضات -->
-    <section id="sec-inventory" class="card" style="display: none;">
-      <h3>إضافة / تعديل صنف بالمخزن</h3>
-      <div class="form-grid">
-        <input type="hidden" id="inv-edit-index" value="-1">
-        <div class="input-group">
-          <label>اسم المنتج:</label>
-          <input type="text" id="inv-name" placeholder="اسم المنتج">
-        </div>
-        <div class="input-group">
-          <label>الكمية المتاحة:</label>
-          <input type="number" id="inv-qty" placeholder="0">
-        </div>
-        <div class="input-group">
-          <label>سعر الشراء:</label>
-          <input type="number" id="inv-buy" placeholder="0.00">
-        </div>
-        <div class="input-group">
-          <label>سعر البيع:</label>
-          <input type="number" id="inv-sell" placeholder="0.00">
-        </div>
-      </div>
-      <button class="btn submit-btn" id="inv-save-btn" onclick="addStockItem()">حفظ في المخزن</button>
-
-      <div class="table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>المنتج</th>
-              <th>الكمية</th>
-              <th>سعر الشراء</th>
-              <th>سعر البيع</th>
-              <th>إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="inventory-list"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- قسم التقارير والسجلات -->
-    <section id="sec-reports" class="card" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h3>ملخص حركة المبيعات</h3>
-        <div>
-          <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 10px;" onclick="changePinCode()">تغيير الرقم السري</button>
-          <button class="btn btn-danger" style="font-size: 12px; padding: 6px 10px; margin-right: 5px;" onclick="clearAllSales()">تصفير السجل</button>
-        </div>
-      </div>
-      
-      <div class="form-grid" style="margin-bottom: 15px;">
-        <div class="card" style="text-align: center; background: rgba(255,255,255,0.03);">
-          <small>إجمالي عدد الفواتير</small>
-          <h2 id="rep-total-invoices" style="color: var(--primary); margin-top: 5px;">0</h2>
-        </div>
-        <div class="card" style="text-align: center; background: rgba(255,255,255,0.03);">
-          <small>إجمالي قيمة المبيعات</small>
-          <h2 id="rep-total-sales" style="color: var(--success); margin-top: 5px;">0.00</h2>
-        </div>
-      </div>
-
-      <h4>سجل الفواتير المحفوظة</h4>
-      <div class="table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>رقم الفاتورة</th>
-              <th>عدد العناصر</th>
-              <th>الإجمالي</th>
-              <th>التاريخ</th>
-              <th>إجراء</th>
-            </tr>
-          </thead>
-          <tbody id="reports-list"></tbody>
-        </table>
-      </div>
-    </section>
-
+  <!-- واجهة التطبيق الرئيسية -->
+  <div class="app-header">
+    <h1>نظام الكاشير والمبيعات</h1>
+    <span id="client-display-code" style="color: #aaa; font-size: 14px;">الكود: CLI-101</span>
   </div>
 
-  <!-- مكتبات Firebase للربط اللحظي -->
+  <div class="main-content">
+    <h2>مرحباً بك في منظومة العمل</h2>
+    <p style="margin-top: 10px; color: #aaa;">البرنامج يعمل بنجاح والاشتراك ساري.</p>
+  </div>
+
+  <!-- الشريط الدعائي في أسفل الشاشة -->
+  <div id="ad-banner-bar">
+    <marquee id="ad-banner-text" behavior="scroll" direction="right" scrollamount="6"></marquee>
+  </div>
+
+  <!-- واجهة الإغلاق عند انتهاء الاشتراك -->
+  <div id="subscription-overlay">
+    <div class="modal-box">
+      <h2 style="color: #ff4d4d; margin-bottom: 15px; font-size: 20px;">تنبيه نظام الاشتراكات</h2>
+      <p id="subscription-msg" style="margin-bottom: 20px; font-size: 15px; color: #ccc; line-height: 1.6;"></p>
+      <button class="btn-renew" onclick="requestRenewal('تجديد شهر (30 يوم)', 30)">إرسال طلب تجديد الاشتراك للإدارة</button>
+    </div>
+  </div>
+
+  <!-- مكتبات Firebase (الإصدار v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="j.js"></script>
+
+  <!-- ملف الجافاسكربت الخاص بنظام العميل -->
+  <script src="client_app.js"></script>
 </body>
 </html>
