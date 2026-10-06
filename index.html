@@ -47,6 +47,7 @@
               <th>الكمية</th>
               <th>السعر</th>
               <th>الإجمالي</th>
+              <th>إجراء</th>
             </tr>
           </thead>
           <tbody id="invoice-list"></tbody>
@@ -58,8 +59,9 @@
 
     <!-- قسم المخزن والمعروضات -->
     <section id="sec-inventory" class="card" style="display: none;">
-      <h3>إضافة صنف جديد للمخزن</h3>
+      <h3>إضافة / تعديل صنف بالمخزن</h3>
       <div class="form-grid">
+        <input type="hidden" id="inv-edit-index" value="-1">
         <div class="input-group">
           <label>اسم المنتج:</label>
           <input type="text" id="inv-name" placeholder="اسم المنتج">
@@ -77,7 +79,7 @@
           <input type="number" id="inv-sell" placeholder="0.00">
         </div>
       </div>
-      <button class="btn submit-btn" onclick="addStockItem()">حفظ في المخزن</button>
+      <button class="btn submit-btn" id="inv-save-btn" onclick="addStockItem()">حفظ في المخزن</button>
 
       <div class="table-box">
         <table>
@@ -87,6 +89,7 @@
               <th>الكمية</th>
               <th>سعر الشراء</th>
               <th>سعر البيع</th>
+              <th>إجراءات</th>
             </tr>
           </thead>
           <tbody id="inventory-list"></tbody>
@@ -96,7 +99,13 @@
 
     <!-- قسم التقارير والسجلات -->
     <section id="sec-reports" class="card" style="display: none;">
-      <h3>ملخص حركة المبيعات</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3>ملخص حركة المبيعات</h3>
+        <div>
+          <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 10px;" onclick="changePinCode()">تغيير الرقم السري</button>
+          <button class="btn btn-danger" style="font-size: 12px; padding: 6px 10px; margin-right: 5px;" onclick="clearAllSales()">تصفير السجل</button>
+        </div>
+      </div>
       
       <div class="form-grid" style="margin-bottom: 15px;">
         <div class="card" style="text-align: center; background: rgba(255,255,255,0.03);">
@@ -118,6 +127,7 @@
               <th>عدد العناصر</th>
               <th>الإجمالي</th>
               <th>التاريخ</th>
+              <th>إجراء</th>
             </tr>
           </thead>
           <tbody id="reports-list"></tbody>
