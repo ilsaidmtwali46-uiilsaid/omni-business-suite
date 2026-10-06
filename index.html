@@ -9,11 +9,22 @@
 <body>
 
   <div class="container">
+
+    <!-- الشريط الدعائي المتحرك -->
+    <div id="ticker-bar" style="background: #1565c0; color: #fff; padding: 6px 10px; font-size: 13px; overflow: hidden; white-space: nowrap; margin-bottom: 10px; border-radius: 6px; display: none;">
+      <marquee id="ticker-text" behavior="scroll" direction="right"></marquee>
+    </div>
+
+    <!-- هيدر النظام وزر طلب التجديد -->
     <header class="card header-box">
-      <h2>نظام إدارة الأعمال (OBS)</h2>
-      <span id="system-status" class="status-tag">جاهز للعمل</span>
+      <div>
+        <h2>نظام إدارة الأعمال (OBS)</h2>
+        <span id="sub-status-tag" class="status-tag" style="margin-top: 5px; display: inline-block;">جاري التحقق من الاشتراك...</span>
+      </div>
+      <button class="btn btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="requestRenewal()">طلب تجديد الاشتراك</button>
     </header>
 
+    <!-- أزرار التنقل الرئيسية -->
     <div class="grid nav-buttons">
       <button class="btn" onclick="showSection('sales')">شاشة المبيعات</button>
       <button class="btn btn-secondary" onclick="showSection('inventory')">المخزن والمعروضات</button>
@@ -137,6 +148,9 @@
 
   </div>
 
+  <!-- مكتبات Firebase للربط اللحظي -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="j.js"></script>
 </body>
 </html>
