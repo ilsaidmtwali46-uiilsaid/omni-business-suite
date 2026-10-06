@@ -6,11 +6,11 @@
   <title>نظام الكاشير والمبيعات</title>
   <link rel="stylesheet" href="c.css">
   <style>
-    /* شاشة القفل عند انتهاء الاشتراك */
+    /* شاشة قفل التطبيق عند انتهاء الاشتراك */
     #subscription-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(0, 0, 0, 0.94);
       z-index: 9999;
       display: none;
       flex-direction: column;
@@ -26,32 +26,38 @@
       padding: 25px;
       border-radius: 12px;
       max-width: 400px;
-      width: 100%;
+      width: 90%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .btn-renew {
       background: #28a745;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       margin-top: 15px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
       width: 100%;
+      font-size: 15px;
     }
-    /* الشريط الدعائي */
+    .btn-renew:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    /* الشريط الدعائي اللحظي */
     #ad-banner-bar {
       display: none;
       background: #ffc107;
       color: #000;
-      padding: 10px;
+      padding: 8px 0;
       font-weight: bold;
       overflow: hidden;
       white-space: nowrap;
     }
     .marquee {
       display: inline-block;
-      animation: marquee 12s linear infinite;
+      animation: marquee 14s linear infinite;
     }
     @keyframes marquee {
       0% { transform: translateX(100%); }
@@ -62,7 +68,7 @@
 <body>
 
   <!-- الهيدر العلوي -->
-  <header style="display: flex; justify-content: space-between; padding: 15px; background: #111; color: #fff;">
+  <header style="display: flex; justify-content: space-between; padding: 15px; background: #111; color: #fff; border-bottom: 1px solid #333;">
     <div>نظام الكاشير والمبيعات</div>
     <div id="client-display-code" style="color: #ffc107; font-weight: bold;">الكود: جاري التحميل...</div>
   </header>
@@ -74,27 +80,27 @@
 
   <!-- الواجهة الرئيسية عند تفعيل الاشتراك -->
   <main style="padding: 20px; color: #fff;">
-    <div style="background: #222; padding: 20px; border-radius: 8px; text-align: center;">
+    <div style="background: #1e1e1e; padding: 25px; border-radius: 8px; text-align: center; border: 1px solid #333;">
       <h2>مرحباً بك في منظومة العمل</h2>
-      <p style="color: #28a745;">البرنامج يعمل بنجاح والاشتراك ساري.</p>
+      <p style="color: #28a745; font-size: 18px; font-weight: bold;">البرنامج يعمل بنجاح والاشتراك ساري.</p>
     </div>
   </main>
 
-  <!-- نافذة قفل التطبيق وطلب التجديد (تظهر فقط عند الانتهاء أو عدم التفعيل) -->
+  <!-- نافذة قفل التطبيق وطلب التجديد -->
   <div id="subscription-overlay">
     <div class="modal-box">
       <h3 style="color: #ff4d4d; margin-top:0;">تنبيه الاشتراك</h3>
       <p id="subscription-msg">جاري فحص حالة الاشتراك...</p>
       
-      <button class="btn-renew" onclick="requestRenewal('تجديد شهري', 30)">إرسال طلب تجديد الاشتراك (30 يوم)</button>
+      <button id="renew-btn" class="btn-renew" onclick="requestRenewal('تجديد شهري', 30)">إرسال طلب تجديد الاشتراك (30 يوم)</button>
     </div>
   </div>
 
-  <!-- مكتبات Firebase -->
+  <!-- مكتبات Firebase SDK v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <!-- كود العميل -->
+  <!-- ملف كود العميل -->
   <script src="Client_app.js"></script>
 
 </body>
