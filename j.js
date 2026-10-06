@@ -4,31 +4,36 @@
 
 let currentInvoice = [];
 let inventory = JSON.parse(localStorage.getItem('obs_inventory')) || [];
+let salesHistory = JSON.parse(localStorage.getItem('obs_sales')) || [];
 
-// تحميل بيانات المخزن فور فتح الصفحة
+// تحميل البيانات فور فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
   renderInventoryTable();
+  renderReports();
 });
 
-// التنقل بين الأقسام
+// التنقل بين الشاشات
 function showSection(sectionName) {
   const salesSec = document.getElementById('sec-sales');
   const invSec = document.getElementById('sec-inventory');
+  const repSec = document.getElementById('sec-reports');
 
   salesSec.style.display = 'none';
   invSec.style.display = 'none';
+  repSec.style.display = 'none';
 
   if (sectionName === 'sales') {
     salesSec.style.display = 'block';
   } else if (sectionName === 'inventory') {
     invSec.style.display = 'block';
     renderInventoryTable();
-  } else {
-    alert('قسم ' + sectionName + ' قيد التطوير!');
+  } else if (sectionName === 'reports') {
+    repSec.style.display = 'block';
+    renderReports();
   }
 }
 
-// دالة إضافة عنصر للفاتورة
+// إضافة عنصر للفاتورة الحالية
 function addInvoiceItem() {
   const nameInput = document.getElementById('item-name');
   const qtyInput = document.getElementById('item-qty');
@@ -68,7 +73,30 @@ function renderInvoiceTable() {
   });
 }
 
-// دالة إضافة صنف للمخزن
+// حفظ الفاتورة الحالية وتنقيلها للتقارير
+function saveInvoice() {
+  if (currentInvoice.length === 0) {
+    alert('الفاتورة فارغة!');
+    return;
+  }
+
+  const totalAmount = currentInvoice.reduce((sum, item) => sum + item.total, 0);
+  const invoiceData = {
+    id: salesHistory.length + 1,
+    itemsCount: currentInvoice.length,
+    total: totalAmount,
+    date: new Date().toLocaleDateString('ar-EG')
+  };
+
+  salesHistory.push(invoiceData);
+  localStorage.setItem('obs_sales', JSON.stringify(salesHistory));
+
+  currentInvoice = [];
+  renderInvoiceTable();
+  alert('تم حفظ الفاتورة بنجاح!');
+}
+
+// إضافة صنف للمخزن
 function addStockItem() {
   const name = document.getElementById('inv-name').value.trim();
   const qty = parseFloat(document.getElementById('inv-qty').value) || 0;
@@ -105,4 +133,31 @@ function renderInventoryTable() {
     `;
     tbody.appendChild(row);
   });
+}
+
+// عرض حركة التقارير والسجلات
+function renderReports() {
+  const tbody = document.getElementById('reports-list');
+  const countEl = document.getElementById('rep-total-invoices');
+  const totalEl = document.getElementById('rep-total-sales');
+
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let grandTotal = 0;
+
+  salesHistory.forEach(inv => {
+    grandTotal += inv.total;
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>#${inv.id}</td>
+      <td>${inv.itemsCount}</td>
+      <td>${inv.total.toFixed(2)}</td>
+      <td>${inv.date}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  countEl.textContent = salesHistory.length;
+  totalEl.textContent = grandTotal.toFixed(2);
 }
