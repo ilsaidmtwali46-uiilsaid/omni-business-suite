@@ -1,18 +1,42 @@
 // ==========================================
-// j.js - إدارة الدوال والتفاعل وحفظ البيانات
+// j.js - إدارة الدوال والتفاعل والحماية
 // ==========================================
 
 let currentInvoice = [];
 let inventory = JSON.parse(localStorage.getItem('obs_inventory')) || [];
 let salesHistory = JSON.parse(localStorage.getItem('obs_sales')) || [];
+let adminPin = localStorage.getItem('obs_pin') || '1234'; // الرقم السري الافتراضي 1234
 
-// تحميل البيانات فور فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
   renderInventoryTable();
   renderReports();
 });
 
-// التنقل بين الشاشات
+// دالة التحقق من الرقم السري
+function checkPin() {
+  const inputPin = prompt('أدخل الرقم السري للتحقق:');
+  if (inputPin === adminPin) {
+    return true;
+  } else {
+    alert('الرقم السري غير صحيح!');
+    return false;
+  }
+}
+
+// دالة تغيير الرقم السري
+function changePinCode() {
+  if (!checkPin()) return;
+  const newPin = prompt('أدخل الرقم السري الجديد:');
+  if (newPin && newPin.trim().length >= 4) {
+    adminPin = newPin.trim();
+    localStorage.setItem('obs_pin', adminPin);
+    alert('تم تغيير الرقم السري بنجاح!');
+  } else {
+    alert('الرقم السري يجب أن يكون 4 أرقام على الأقل!');
+  }
+}
+
+// التنقل بين الأقسام
 function showSection(sectionName) {
   const salesSec = document.getElementById('sec-sales');
   const invSec = document.getElementById('sec-inventory');
@@ -33,7 +57,7 @@ function showSection(sectionName) {
   }
 }
 
-// إضافة عنصر للفاتورة الحالية
+// عناصر الفاتورة
 function addInvoiceItem() {
   const nameInput = document.getElementById('item-name');
   const qtyInput = document.getElementById('item-qty');
@@ -58,22 +82,27 @@ function addInvoiceItem() {
   nameInput.focus();
 }
 
+function removeInvoiceItem(index) {
+  currentInvoice.splice(index, 1);
+  renderInvoiceTable();
+}
+
 function renderInvoiceTable() {
   const tbody = document.getElementById('invoice-list');
   tbody.innerHTML = '';
-  currentInvoice.forEach(item => {
+  currentInvoice.forEach((item, index) => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.name}</td>
       <td>${item.qty}</td>
       <td>${item.price.toFixed(2)}</td>
       <td>${item.total.toFixed(2)}</td>
+      <td><button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeInvoiceItem(${index})">حذف</button></td>
     `;
     tbody.appendChild(row);
   });
 }
 
-// حفظ الفاتورة الحالية وتنقيلها للتقارير
 function saveInvoice() {
   if (currentInvoice.length === 0) {
     alert('الفاتورة فارغة!');
@@ -96,8 +125,9 @@ function saveInvoice() {
   alert('تم حفظ الفاتورة بنجاح!');
 }
 
-// إضافة صنف للمخزن
+// إدارة المخزن (إضافة / تعديل / حذف مع الحماية)
 function addStockItem() {
+  const editIndex = parseInt(document.getElementById('inv-edit-index').value);
   const name = document.getElementById('inv-name').value.trim();
   const qty = parseFloat(document.getElementById('inv-qty').value) || 0;
   const buy = parseFloat(document.getElementById('inv-buy').value) || 0;
@@ -108,7 +138,16 @@ function addStockItem() {
     return;
   }
 
-  inventory.push({ name, qty, buy, sell });
+  if (editIndex >= 0) {
+    // تعديل صنف موجود
+    inventory[editIndex] = { name, qty, buy, sell };
+    document.getElementById('inv-edit-index').value = "-1";
+    document.getElementById('inv-save-btn').textContent = "حفظ في المخزن";
+  } else {
+    // إضافة صنف جديد
+    inventory.push({ name, qty, buy, sell });
+  }
+
   localStorage.setItem('obs_inventory', JSON.stringify(inventory));
   renderInventoryTable();
 
@@ -118,24 +157,50 @@ function addStockItem() {
   document.getElementById('inv-sell').value = '';
 }
 
+function editStockItem(index) {
+  if (!checkPin()) return; // حماية بالرقم السري
+
+  const item = inventory[index];
+  document.getElementById('inv-name').value = item.name;
+  document.getElementById('inv-qty').value = item.qty;
+  document.getElementById('inv-buy').value = item.buy;
+  document.getElementById('inv-sell').value = item.sell;
+  document.getElementById('inv-edit-index').value = index;
+  document.getElementById('inv-save-btn').textContent = "تحديث الصنف";
+}
+
+function deleteStockItem(index) {
+  if (!checkPin()) return; // حماية بالرقم السري
+
+  if (confirm('هل أنت تأكد من حذف هذا الصنف من المخزن؟')) {
+    inventory.splice(index, 1);
+    localStorage.setItem('obs_inventory', JSON.stringify(inventory));
+    renderInventoryTable();
+  }
+}
+
 function renderInventoryTable() {
   const tbody = document.getElementById('inventory-list');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  inventory.forEach(item => {
+  inventory.forEach((item, index) => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.name}</td>
       <td>${item.qty}</td>
       <td>${item.buy.toFixed(2)}</td>
       <td>${item.sell.toFixed(2)}</td>
+      <td>
+        <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="editStockItem(${index})">تعديل</button>
+        <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="deleteStockItem(${index})">حذف</button>
+      </td>
     `;
     tbody.appendChild(row);
   });
 }
 
-// عرض حركة التقارير والسجلات
+// السجلات والتقارير (تصفير وحذف مع الحماية)
 function renderReports() {
   const tbody = document.getElementById('reports-list');
   const countEl = document.getElementById('rep-total-invoices');
@@ -146,7 +211,7 @@ function renderReports() {
 
   let grandTotal = 0;
 
-  salesHistory.forEach(inv => {
+  salesHistory.forEach((inv, index) => {
     grandTotal += inv.total;
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -154,10 +219,31 @@ function renderReports() {
       <td>${inv.itemsCount}</td>
       <td>${inv.total.toFixed(2)}</td>
       <td>${inv.date}</td>
+      <td><button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="deleteInvoice(${index})">حذف</button></td>
     `;
     tbody.appendChild(row);
   });
 
   countEl.textContent = salesHistory.length;
   totalEl.textContent = grandTotal.toFixed(2);
+}
+
+function deleteInvoice(index) {
+  if (!checkPin()) return; // حماية بالرقم السري
+
+  if (confirm('هل أنت تأكد من حذف هذه الفاتورة؟')) {
+    salesHistory.splice(index, 1);
+    localStorage.setItem('obs_sales', JSON.stringify(salesHistory));
+    renderReports();
+  }
+}
+
+function clearAllSales() {
+  if (!checkPin()) return; // حماية بالرقم السري
+
+  if (confirm('تحذير: هل أنت متأكد من تصفير وحذف جميع الفواتير والمبيعات؟')) {
+    salesHistory = [];
+    localStorage.setItem('obs_sales', JSON.stringify(salesHistory));
+    renderReports();
+  }
 }
