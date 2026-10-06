@@ -1,8 +1,7 @@
 // ==========================================
-// client_app.js - كود فحص الاشتراك وتحديث البيانات للعميل
+// client_app.js - تطبيق العميل / الكاشير
 // ==========================================
 
-// 1. إعدادات Firebase الخاصة بالمنظومة
 const firebaseConfig = {
   apiKey: "AIzaSyCY-sv8z7YIDxUMF47ie2ZXi6xxykEYvWs",
   authDomain: "cashier-app-9e18a.firebaseapp.com",
@@ -14,72 +13,81 @@ const firebaseConfig = {
   measurementId: "G-6RRGZRPW24"
 };
 
-// 2. تهيئة Firebase
+// تهيئة Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// 3. كود الجهاز الخاص بالعميل (مثال: CLI-101)
-// يمكنك تخزينه في localStorage ليبقى ثابتاً في جهاز العميل
+// كود العميل الثابت المسجل في اللوحة (يمكن تغييره لـ CLI-101 أو غيره)
 const MY_CLIENT_CODE = localStorage.getItem('client_code') || 'CLI-101';
 
 document.addEventListener('DOMContentLoaded', () => {
+  // عرض كود الجهاز في أعلى الشاشة
+  const codeDisplay = document.getElementById('client-display-code');
+  if (codeDisplay) codeDisplay.textContent = `الكود: ${MY_CLIENT_CODE}`;
+
+  // بدء الفحص والمزامنة مع السحابة
   checkSubscriptionAndBanners();
 });
 
-// 4. دالة الفحص المستمر واللحظي للاشتراك والإعلانات
+// فحص لحظي ومستمر للاشتراك والإعلانات عبر السحابة
 function checkSubscriptionAndBanners() {
   db.ref('saas_data').on('value', (snapshot) => {
     const data = snapshot.val() || {};
     const clients = data.clients || [];
     const banners = data.banners || [];
 
-    // أ) البحث عن بيانات العميل باستخدام الكود الخاص به
+    // البحث عن العميل باستخدام كود الجهاز
     const myAccount = clients.find(c => c.code === MY_CLIENT_CODE);
 
     if (!myAccount) {
-      showSubscriptionModal("تنبيه: هذا الجهاز غير مسجل في المنظومة. يرجى التواصل مع الدعم الفني.");
+      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التنسيق مع الدعم الفني لتفعيله.`);
       lockApp();
       return;
     }
 
-    // ب) فحص تاريخ انتهاء الاشتراك
+    // حفظ اسم العميل محلياً لاستخدامه في الطلبات
+    localStorage.setItem('client_name', myAccount.name);
+
+    // فحص تاريخ انتهاء الاشتراك
     const now = Date.now();
     if (now > myAccount.endTimestamp) {
-      showSubscriptionModal(`عذراً، انتهت فترة اشتراكك بتاريخ (${myAccount.endDate}). يرجى طلب تجديد الاشتراك للمتابعة.`);
+      showSubscriptionModal(`انتهت فترة استخدام الخدمة بتاريخ (${myAccount.endDate}). أرسل طلب تجديد للاستمرار في استخدام البرنامج.`);
       lockApp();
     } else {
       unlockApp();
     }
 
-    // ج) جلب الشريط الدعائي الخاص بالعميل أو للجميع
+    // تحديث إعلانات الشريط الدعائي
     displayBanner(banners);
   }, (error) => {
-    console.error("خطأ في الاتصال بالسحابة:", error);
+    console.error("فشل الاتصال بالسحابة:", error);
   });
 }
 
-// 5. عرض الشريط الدعائي أسفل الشاشة
+// إظهار الشريط الدعائي
 function displayBanner(banners) {
-  const bannerContainer = document.getElementById('ad-banner-text');
-  if (!bannerContainer) return;
+  const bannerBar = document.getElementById('ad-banner-bar');
+  const bannerText = document.getElementById('ad-banner-text');
 
-  // إيجاد إعلان مخصص لهذا العميل أو إعلان عام للجميع
+  if (!bannerBar || !bannerText) return;
+
+  // البحث عن إعلان مخصص لهذا العميل أو إعلان عام موجه للجميع
   const activeBanner = banners.find(b => b.clientCode === MY_CLIENT_CODE || b.target === 'ALL');
 
   if (activeBanner) {
-    bannerContainer.textContent = activeBanner.text;
-    document.getElementById('ad-banner-bar').style.display = 'block';
+    bannerText.textContent = activeBanner.text;
+    bannerBar.style.display = 'block';
   } else {
-    document.getElementById('ad-banner-bar').style.display = 'none';
+    bannerBar.style.display = 'none';
   }
 }
 
-// 6. إرسال طلب تجديد الاشتراك إلى لوحة الأدمن
+// إرسال طلب تجديد الاشتراك للأدمن
 function requestRenewal(planName, days) {
   const myAccountName = localStorage.getItem('client_name') || MY_CLIENT_CODE;
-  
+
   db.ref('saas_data/requests').push({
     clientCode: MY_CLIENT_CODE,
     clientName: myAccountName,
@@ -88,13 +96,12 @@ function requestRenewal(planName, days) {
     date: new Date().toLocaleDateString('ar-EG'),
     timestamp: Date.now()
   }).then(() => {
-    alert("تم إرسال طلب التجديد إلى الإدارة بنجاح!");
+    alert("تم إرسال طلب التجديد للأدمن بنجاح!");
   }).catch((err) => {
-    alert("حدث خطأ أثناء إرسال الطلب: " + err.message);
+    alert("خطأ أثناء إرسال الطلب: " + err.message);
   });
 }
 
-// 7. إغلاق التطبيق وإظهار شاشة التجديد عند الانتهاء
 function lockApp() {
   const overlay = document.getElementById('subscription-overlay');
   if (overlay) overlay.style.display = 'flex';
