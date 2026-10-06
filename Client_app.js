@@ -1,5 +1,5 @@
 // ==========================================
-// Client_app.js - تطبيق العميل (مُحدث ومحلول بالكامل)
+// Client_app.js - منطق تطبيق العميل
 // ==========================================
 
 const firebaseConfig = {
@@ -18,19 +18,18 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-// تحديد كود العميل الحسابي (يمكن تغييره حسب الجهاز)
+// كود الجهاز الخاص بالعميل
 const CLIENT_CODE = "CLI-101";
 
 document.addEventListener('DOMContentLoaded', () => {
   const codeElem = document.getElementById('client-display-code');
   if (codeElem) codeElem.textContent = `الكود: ${CLIENT_CODE}`;
 
-  // الاستماع المباشر والتزامن اللحظي مع قاعدة البيانات
   listenToSubscription();
   listenToBanners();
 });
 
-// فحص تفعيل الاشتراك اللحظي
+// 1. الاستماع اللحظي لحالة الاشتراك
 function listenToSubscription() {
   db.ref(`saas_data/clients/${CLIENT_CODE}`).on('value', (snapshot) => {
     const client = snapshot.val();
@@ -38,7 +37,6 @@ function listenToSubscription() {
     const msg = document.getElementById('subscription-msg');
 
     if (!client) {
-      // العميل غير موجود بجدول العملاء
       if (overlay) overlay.style.display = 'flex';
       if (msg) msg.textContent = `هذا الجهاز (${CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة للتفعيل.`;
       return;
@@ -47,20 +45,19 @@ function listenToSubscription() {
     const now = Date.now();
     let isValid = false;
 
-    // فحص الصلاحية برقم الميلي ثانية
+    // المقارنة الرقمية الدقيقة بدلالة المليثانية
     if (client.endTimestamp && now <= client.endTimestamp) {
       isValid = true;
     } 
-    // فحص الصلاحية بالتاريخ النصي (تحسباً إذا أرسل الأدمن تاريخ نصي)
+    // التراجع للتاريخ النصي عند الضرورة
     else if (client.endDate) {
       const parsedDate = new Date(client.endDate).getTime();
-      if (!isNaN(parsedDate) && parsedDate >= (now - 86400000)) { // السماح بنهاية اليوم
+      if (!isNaN(parsedDate) && parsedDate >= (now - 86400000)) {
         isValid = true;
       }
     }
 
-    // إذا كانت الحالة active والتاريخ ساري
-    if (client.status === 'active' || isValid) {
+    if (client.status === 'active' && isValid) {
       if (overlay) overlay.style.display = 'none'; // فتح الشاشة فوراً
     } else {
       if (overlay) overlay.style.display = 'flex'; // قفل الشاشة
@@ -69,26 +66,49 @@ function listenToSubscription() {
   });
 }
 
-// دالة إرسال طلب تجديد من العميل إلى الأدمن
+// 2. إرسال طلب تجديد ومنع التكرار
 function requestRenewal(planName, days) {
+  const renewBtn = document.getElementById('renew-btn');
   const reqRef = db.ref('saas_data/requests');
-  const newReq = reqRef.push();
-  
-  newReq.set({
-    clientCode: CLIENT_CODE,
-    clientName: "سوپر ماركت الأمل",
-    planName: planName,
-    days: days,
-    date: new Date().toLocaleDateString('ar-EG'),
-    timestamp: Date.now()
-  }).then(() => {
-    alert("تم إرسال طلب التجديد إلى الإدارة بنجاح!");
-  }).catch((err) => {
-    alert("حدث خطأ أثناء إرسال الطلب: " + err.message);
+
+  // التحقق أولاً من عدم وجود طلبات معلقة لنفس العميل
+  reqRef.once('value').then((snapshot) => {
+    const requests = snapshot.val() || {};
+    let hasPending = false;
+
+    Object.keys(requests).forEach((key) => {
+      if (requests[key].clientCode === CLIENT_CODE) {
+        hasPending = true;
+      }
+    });
+
+    if (hasPending) {
+      alert("لديك طلب تجديد معلق بالفعل قيد الانتظار لدى الإدارة!");
+      return;
+    }
+
+    if (renewBtn) renewBtn.disabled = true;
+
+    // إرسال طلب جديد فريد
+    const newReq = reqRef.push();
+    newReq.set({
+      clientCode: CLIENT_CODE,
+      clientName: "سوپر ماركت الأمل",
+      planName: planName,
+      days: days,
+      date: new Date().toLocaleDateString('ar-EG'),
+      timestamp: Date.now()
+    }).then(() => {
+      alert("تم إرسال طلب التجديد إلى الإدارة بنجاح!");
+    }).catch((err) => {
+      alert("حدث خطأ أثناء إرسال الطلب: " + err.message);
+    }).finally(() => {
+      if (renewBtn) renewBtn.disabled = false;
+    });
   });
 }
 
-// استلام شريط الإعلانات اللحظي
+// 3. الاستماع اللحظي للإعلانات
 function listenToBanners() {
   db.ref('saas_data/banners').on('value', (snapshot) => {
     const banners = snapshot.val() || {};
