@@ -1,5 +1,5 @@
 // ==========================================
-// Client_app.js - تطبيق العميل
+// Client_app.js - تطبيق العميل (مُحدث ومحلول بالكامل)
 // ==========================================
 
 const firebaseConfig = {
@@ -13,104 +13,101 @@ const firebaseConfig = {
   measurementId: "G-6RRGZRPW24"
 };
 
-// تهيئة تطبيق Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// كود العميل المخصص لهذا الجهاز
-const MY_CLIENT_CODE = localStorage.getItem('client_code') || 'CLI-101';
+// تحديد كود العميل الحسابي (يمكن تغييره حسب الجهاز)
+const CLIENT_CODE = "CLI-101";
 
 document.addEventListener('DOMContentLoaded', () => {
-  const codeDisplay = document.getElementById('client-display-code');
-  if (codeDisplay) codeDisplay.textContent = `الكود: ${MY_CLIENT_CODE}`;
+  const codeElem = document.getElementById('client-display-code');
+  if (codeElem) codeElem.textContent = `الكود: ${CLIENT_CODE}`;
 
-  startLiveSync();
+  // الاستماع المباشر والتزامن اللحظي مع قاعدة البيانات
+  listenToSubscription();
+  listenToBanners();
 });
 
-function startLiveSync() {
-  db.ref('saas_data').on('value', (snapshot) => {
-    const data = snapshot.val() || {};
-    const clientsObj = data.clients || {};
-    const bannersObj = data.banners || {};
+// فحص تفعيل الاشتراك اللحظي
+function listenToSubscription() {
+  db.ref(`saas_data/clients/${CLIENT_CODE}`).on('value', (snapshot) => {
+    const client = snapshot.val();
+    const overlay = document.getElementById('subscription-overlay');
+    const msg = document.getElementById('subscription-msg');
 
-    const myAccount = clientsObj[MY_CLIENT_CODE];
-
-    // 1. حالة العميل غير مسجل
-    if (!myAccount) {
-      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة للتفعيل.`);
-      lockApp();
+    if (!client) {
+      // العميل غير موجود بجدول العملاء
+      if (overlay) overlay.style.display = 'flex';
+      if (msg) msg.textContent = `هذا الجهاز (${CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة للتفعيل.`;
       return;
     }
 
-    localStorage.setItem('client_name', myAccount.name);
-
-    // 2. فحص صلاحية الاشتراك
     const now = Date.now();
-    if (now > myAccount.endTimestamp) {
-      showSubscriptionModal(`انتهت فترة الاشتراك بتاريخ (${myAccount.endDate}). يرجى طلب التجديد للاستمرار.`);
-      lockApp();
-    } else {
-      unlockApp();
+    let isValid = false;
+
+    // فحص الصلاحية برقم الميلي ثانية
+    if (client.endTimestamp && now <= client.endTimestamp) {
+      isValid = true;
+    } 
+    // فحص الصلاحية بالتاريخ النصي (تحسباً إذا أرسل الأدمن تاريخ نصي)
+    else if (client.endDate) {
+      const parsedDate = new Date(client.endDate).getTime();
+      if (!isNaN(parsedDate) && parsedDate >= (now - 86400000)) { // السماح بنهاية اليوم
+        isValid = true;
+      }
     }
 
-    // 3. تحديث الشريط الدعائي اللحظي
-    updateBannerDisplay(bannersObj);
+    // إذا كانت الحالة active والتاريخ ساري
+    if (client.status === 'active' || isValid) {
+      if (overlay) overlay.style.display = 'none'; // فتح الشاشة فوراً
+    } else {
+      if (overlay) overlay.style.display = 'flex'; // قفل الشاشة
+      if (msg) msg.textContent = `انتهى اشتراك هذا الجهاز (${CLIENT_CODE}). يرجى تجديد الاشتراك للمتابعة.`;
+    }
   });
 }
 
-function updateBannerDisplay(bannersObj) {
-  const bannerBar = document.getElementById('ad-banner-bar');
-  const bannerText = document.getElementById('ad-banner-text');
-
-  if (!bannerBar || !bannerText) return;
-
-  const bannerKeys = Object.keys(bannersObj);
-  let activeText = '';
-
-  for (let i = bannerKeys.length - 1; i >= 0; i--) {
-    const b = bannersObj[bannerKeys[i]];
-    if (b.target === 'ALL' || b.clientCode === MY_CLIENT_CODE) {
-      activeText = b.text;
-      break;
-    }
-  }
-
-  if (activeText) {
-    bannerText.textContent = activeText;
-    bannerBar.style.display = 'block';
-  } else {
-    bannerBar.style.display = 'none';
-  }
-}
-
+// دالة إرسال طلب تجديد من العميل إلى الأدمن
 function requestRenewal(planName, days) {
-  const clientName = localStorage.getItem('client_name') || MY_CLIENT_CODE;
-
-  db.ref('saas_data/requests').push({
-    clientCode: MY_CLIENT_CODE,
-    clientName: clientName,
+  const reqRef = db.ref('saas_data/requests');
+  const newReq = reqRef.push();
+  
+  newReq.set({
+    clientCode: CLIENT_CODE,
+    clientName: "سوپر ماركت الأمل",
     planName: planName,
     days: days,
     date: new Date().toLocaleDateString('ar-EG'),
     timestamp: Date.now()
   }).then(() => {
-    alert("تم إرسال طلب التجديد للإدارة بنجاح!");
+    alert("تم إرسال طلب التجديد إلى الإدارة بنجاح!");
+  }).catch((err) => {
+    alert("حدث خطأ أثناء إرسال الطلب: " + err.message);
   });
 }
 
-function lockApp() {
-  const overlay = document.getElementById('subscription-overlay');
-  if (overlay) overlay.style.display = 'flex';
-}
+// استلام شريط الإعلانات اللحظي
+function listenToBanners() {
+  db.ref('saas_data/banners').on('value', (snapshot) => {
+    const banners = snapshot.val() || {};
+    const bannerBar = document.getElementById('ad-banner-bar');
+    const bannerText = document.getElementById('ad-banner-text');
 
-function unlockApp() {
-  const overlay = document.getElementById('subscription-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
+    let activeText = "";
+    Object.keys(banners).forEach((key) => {
+      const b = banners[key];
+      if (b.target === 'ALL' || b.clientCode === CLIENT_CODE) {
+        activeText += ` 📢 ${b.text} | `;
+      }
+    });
 
-function showSubscriptionModal(msg) {
-  const msgElement = document.getElementById('subscription-msg');
-  if (msgElement) msgElement.textContent = msg;
+    if (activeText && bannerBar && bannerText) {
+      bannerText.textContent = activeText;
+      bannerBar.style.display = 'block';
+    } else if (bannerBar) {
+      bannerBar.style.display = 'none';
+    }
+  });
 }
