@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>نظام الكاشير والمبيعات</title>
   <style>
     :root {
@@ -23,46 +23,49 @@
     body {
       background-color: var(--bg-dark);
       color: var(--text);
-      padding: 20px;
-      padding-bottom: 60px; /* مساحة للشريط الدعائي في الأسفل */
+      padding: 12px;
+      padding-bottom: 50px;
       direction: rtl;
     }
 
     .app-header {
       background-color: var(--bg-card);
-      padding: 15px 20px;
+      padding: 12px 15px;
       border-radius: 10px;
       border: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+    }
+
+    .app-header h1 {
+      font-size: 16px;
     }
 
     .main-content {
       background-color: var(--bg-card);
-      padding: 25px;
+      padding: 20px;
       border-radius: 10px;
       border: 1px solid var(--border);
       text-align: center;
     }
 
-    /* الشريط الدعائي أسفل الشاشة */
     #ad-banner-bar {
       display: none;
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: #1e1e1e;
+      background: #1b1b1b;
       color: #ffeb3b;
-      padding: 8px 0;
+      padding: 6px 0;
       border-top: 2px solid var(--primary);
       z-index: 99999;
       font-weight: bold;
+      font-size: 13px;
     }
 
-    /* شاشة الحظر عند انتهاء الاشتراك */
     #subscription-overlay {
       display: none;
       position: fixed;
@@ -82,63 +85,53 @@
 
     .modal-box {
       background: #1e1e1e;
-      padding: 30px;
-      border-radius: 15px;
+      padding: 25px;
+      border-radius: 12px;
       border: 1px solid #333;
-      max-width: 400px;
+      max-width: 380px;
       width: 90%;
     }
 
     .btn-renew {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       background: #28a745;
       color: #fff;
       border: none;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 15px;
+      font-size: 14px;
       cursor: pointer;
       margin-top: 15px;
-    }
-
-    .btn-renew:hover {
-      background: #218838;
     }
   </style>
 </head>
 <body>
 
-  <!-- واجهة التطبيق الرئيسية -->
   <div class="app-header">
     <h1>نظام الكاشير والمبيعات</h1>
-    <span id="client-display-code" style="color: #aaa; font-size: 14px;">الكود: CLI-101</span>
+    <span id="client-display-code" style="color: #aaa; font-size: 12px;">الكود: CLI-101</span>
   </div>
 
   <div class="main-content">
     <h2>مرحباً بك في منظومة العمل</h2>
-    <p style="margin-top: 10px; color: #aaa;">البرنامج يعمل بنجاح والاشتراك ساري.</p>
+    <p style="margin-top: 8px; color: #aaa; font-size: 13px;">البرنامج يعمل بنجاح والاشتراك ساري.</p>
   </div>
 
-  <!-- الشريط الدعائي في أسفل الشاشة -->
   <div id="ad-banner-bar">
-    <marquee id="ad-banner-text" behavior="scroll" direction="right" scrollamount="6"></marquee>
+    <marquee id="ad-banner-text" behavior="scroll" direction="right" scrollamount="5"></marquee>
   </div>
 
-  <!-- واجهة الإغلاق عند انتهاء الاشتراك -->
   <div id="subscription-overlay">
     <div class="modal-box">
-      <h2 style="color: #ff4d4d; margin-bottom: 15px; font-size: 20px;">تنبيه نظام الاشتراكات</h2>
-      <p id="subscription-msg" style="margin-bottom: 20px; font-size: 15px; color: #ccc; line-height: 1.6;"></p>
+      <h2 style="color: #ff4d4d; margin-bottom: 12px; font-size: 18px;">تنبيه نظام الاشتراكات</h2>
+      <p id="subscription-msg" style="margin-bottom: 15px; font-size: 14px; color: #ccc; line-height: 1.5;"></p>
       <button class="btn-renew" onclick="requestRenewal('تجديد شهر (30 يوم)', 30)">إرسال طلب تجديد الاشتراك للإدارة</button>
     </div>
   </div>
 
-  <!-- مكتبات Firebase (الإصدار v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <!-- ملف الجافاسكربت الخاص بنظام العميل -->
   <script src="client_app.js"></script>
 </body>
 </html>
