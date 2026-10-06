@@ -1,5 +1,5 @@
 // ==========================================
-// client_app.js - تطبيق العميل / الكاشير
+// Client_app.js - تطبيق العميل
 // ==========================================
 
 const firebaseConfig = {
@@ -19,15 +19,13 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-// قراءة كود العميل المحدد للجهاز (افتراضي CLI-101)
+// كود العميل المخصص لهذا الجهاز
 const MY_CLIENT_CODE = localStorage.getItem('client_code') || 'CLI-101';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // عرض الكود في الهيدر
   const codeDisplay = document.getElementById('client-display-code');
   if (codeDisplay) codeDisplay.textContent = `الكود: ${MY_CLIENT_CODE}`;
 
-  // بدء الاستماع والتزامُن اللحظي مع السحابة
   startLiveSync();
 });
 
@@ -37,20 +35,18 @@ function startLiveSync() {
     const clientsObj = data.clients || {};
     const bannersObj = data.banners || {};
 
-    // جلب بيانات العميل باستخدام الكود المباشر
     const myAccount = clientsObj[MY_CLIENT_CODE];
 
-    // 1. حالة الجهاز غير مسجل
+    // 1. حالة العميل غير مسجل
     if (!myAccount) {
-      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة لتفعيله.`);
+      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة للتفعيل.`);
       lockApp();
       return;
     }
 
-    // حفظ اسم العميل في الذاكرة المحلية
     localStorage.setItem('client_name', myAccount.name);
 
-    // 2. فحص حالة انتهائ الاشتراك
+    // 2. فحص صلاحية الاشتراك
     const now = Date.now();
     if (now > myAccount.endTimestamp) {
       showSubscriptionModal(`انتهت فترة الاشتراك بتاريخ (${myAccount.endDate}). يرجى طلب التجديد للاستمرار.`);
@@ -59,12 +55,11 @@ function startLiveSync() {
       unlockApp();
     }
 
-    // 3. تحديث الشريط الدعائي المتحرك
+    // 3. تحديث الشريط الدعائي اللحظي
     updateBannerDisplay(bannersObj);
   });
 }
 
-// عرض الإعلان الدعائي الموجه للجهاز أو العام
 function updateBannerDisplay(bannersObj) {
   const bannerBar = document.getElementById('ad-banner-bar');
   const bannerText = document.getElementById('ad-banner-text');
@@ -74,7 +69,6 @@ function updateBannerDisplay(bannersObj) {
   const bannerKeys = Object.keys(bannersObj);
   let activeText = '';
 
-  // البحث عن أحدث إعلان يخص هذا العميل أو موجه للجميع
   for (let i = bannerKeys.length - 1; i >= 0; i--) {
     const b = bannersObj[bannerKeys[i]];
     if (b.target === 'ALL' || b.clientCode === MY_CLIENT_CODE) {
@@ -91,7 +85,6 @@ function updateBannerDisplay(bannersObj) {
   }
 }
 
-// إرسال طلب تجديد الاشتراك للأدمن
 function requestRenewal(planName, days) {
   const clientName = localStorage.getItem('client_name') || MY_CLIENT_CODE;
 
@@ -104,8 +97,6 @@ function requestRenewal(planName, days) {
     timestamp: Date.now()
   }).then(() => {
     alert("تم إرسال طلب التجديد للإدارة بنجاح!");
-  }).catch((err) => {
-    alert("حدث خطأ أثناء الإرسال: " + err.message);
   });
 }
 
