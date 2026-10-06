@@ -52,6 +52,8 @@
           <tbody id="invoice-list"></tbody>
         </table>
       </div>
+
+      <button class="btn btn-success" style="margin-top: 15px;" onclick="saveInvoice()">حفظ وإغلاق الفاتورة</button>
     </section>
 
     <!-- قسم المخزن والمعروضات -->
@@ -88,6 +90,37 @@
             </tr>
           </thead>
           <tbody id="inventory-list"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- قسم التقارير والسجلات -->
+    <section id="sec-reports" class="card" style="display: none;">
+      <h3>ملخص حركة المبيعات</h3>
+      
+      <div class="form-grid" style="margin-bottom: 15px;">
+        <div class="card" style="text-align: center; background: rgba(255,255,255,0.03);">
+          <small>إجمالي عدد الفواتير</small>
+          <h2 id="rep-total-invoices" style="color: var(--primary); margin-top: 5px;">0</h2>
+        </div>
+        <div class="card" style="text-align: center; background: rgba(255,255,255,0.03);">
+          <small>إجمالي قيمة المبيعات</small>
+          <h2 id="rep-total-sales" style="color: var(--success); margin-top: 5px;">0.00</h2>
+        </div>
+      </div>
+
+      <h4>سجل الفواتير المحفوظة</h4>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>رقم الفاتورة</th>
+              <th>عدد العناصر</th>
+              <th>الإجمالي</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody id="reports-list"></tbody>
         </table>
       </div>
     </section>
