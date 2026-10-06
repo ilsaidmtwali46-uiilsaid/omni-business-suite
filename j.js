@@ -1,5 +1,5 @@
 // ==========================================
-// client_app.js - تطبيق العميل / الكاشير
+// j.js - كود تطبيق العميل (محدث للمستودع omni-business-suite)
 // ==========================================
 
 const firebaseConfig = {
@@ -13,92 +13,96 @@ const firebaseConfig = {
   measurementId: "G-6RRGZRPW24"
 };
 
-// تهيئة Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// كود العميل الثابت المسجل في اللوحة (يمكن تغييره لـ CLI-101 أو غيره)
+// تحديد كود الجهاز للعميل (الافتراضي CLI-101)
 const MY_CLIENT_CODE = localStorage.getItem('client_code') || 'CLI-101';
 
 document.addEventListener('DOMContentLoaded', () => {
   // عرض كود الجهاز في أعلى الشاشة
   const codeDisplay = document.getElementById('client-display-code');
-  if (codeDisplay) codeDisplay.textContent = `الكود: ${MY_CLIENT_CODE}`;
+  if (codeDisplay) {
+    codeDisplay.textContent = `الكود: ${MY_CLIENT_CODE}`;
+  }
 
-  // بدء الفحص والمزامنة مع السحابة
-  checkSubscriptionAndBanners();
+  // بدء الاستماع اللحظي للتغييرات من السحابة
+  startLiveSync();
 });
 
-// فحص لحظي ومستمر للاشتراك والإعلانات عبر السحابة
-function checkSubscriptionAndBanners() {
+function startLiveSync() {
   db.ref('saas_data').on('value', (snapshot) => {
     const data = snapshot.val() || {};
-    const clients = data.clients || [];
-    const banners = data.banners || [];
+    const clientsObj = data.clients || {};
+    const bannersObj = data.banners || {};
 
-    // البحث عن العميل باستخدام كود الجهاز
-    const myAccount = clients.find(c => c.code === MY_CLIENT_CODE);
+    // قراءة بيانات هذا العميل تحديداً باستخدام الكود
+    const myAccount = clientsObj[MY_CLIENT_CODE];
 
     if (!myAccount) {
-      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التنسيق مع الدعم الفني لتفعيله.`);
+      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة للتفعيل.`);
       lockApp();
       return;
     }
 
-    // حفظ اسم العميل محلياً لاستخدامه في الطلبات
     localStorage.setItem('client_name', myAccount.name);
 
-    // فحص تاريخ انتهاء الاشتراك
+    // التحقق من حالة وتاريخ الاشتراك
     const now = Date.now();
     if (now > myAccount.endTimestamp) {
-      showSubscriptionModal(`انتهت فترة استخدام الخدمة بتاريخ (${myAccount.endDate}). أرسل طلب تجديد للاستمرار في استخدام البرنامج.`);
+      showSubscriptionModal(`انتهت فترة الاشتراك بتاريخ (${myAccount.endDate}). يرجى طلب التجديد للاستمرار.`);
       lockApp();
     } else {
       unlockApp();
     }
 
-    // تحديث إعلانات الشريط الدعائي
-    displayBanner(banners);
-  }, (error) => {
-    console.error("فشل الاتصال بالسحابة:", error);
+    // تحديث الشريط الدعائي اللحظي
+    updateBannerDisplay(bannersObj);
   });
 }
 
-// إظهار الشريط الدعائي
-function displayBanner(banners) {
+// تحديث شريط الإعلانات اللحظي
+function updateBannerDisplay(bannersObj) {
   const bannerBar = document.getElementById('ad-banner-bar');
   const bannerText = document.getElementById('ad-banner-text');
 
   if (!bannerBar || !bannerText) return;
 
-  // البحث عن إعلان مخصص لهذا العميل أو إعلان عام موجه للجميع
-  const activeBanner = banners.find(b => b.clientCode === MY_CLIENT_CODE || b.target === 'ALL');
+  const bannerKeys = Object.keys(bannersObj);
+  let activeText = '';
 
-  if (activeBanner) {
-    bannerText.textContent = activeBanner.text;
+  // البحث عن أحدث إعلان موجه لهذا العميل أو للجميع
+  for (let i = bannerKeys.length - 1; i >= 0; i--) {
+    const b = bannersObj[bannerKeys[i]];
+    if (b.target === 'ALL' || b.clientCode === MY_CLIENT_CODE) {
+      activeText = b.text;
+      break;
+    }
+  }
+
+  if (activeText) {
+    bannerText.textContent = activeText;
     bannerBar.style.display = 'block';
   } else {
     bannerBar.style.display = 'none';
   }
 }
 
-// إرسال طلب تجديد الاشتراك للأدمن
+// إرسال طلب تجديد للأدمن
 function requestRenewal(planName, days) {
-  const myAccountName = localStorage.getItem('client_name') || MY_CLIENT_CODE;
+  const clientName = localStorage.getItem('client_name') || MY_CLIENT_CODE;
 
   db.ref('saas_data/requests').push({
     clientCode: MY_CLIENT_CODE,
-    clientName: myAccountName,
+    clientName: clientName,
     planName: planName,
     days: days,
     date: new Date().toLocaleDateString('ar-EG'),
     timestamp: Date.now()
   }).then(() => {
-    alert("تم إرسال طلب التجديد للأدمن بنجاح!");
-  }).catch((err) => {
-    alert("خطأ أثناء إرسال الطلب: " + err.message);
+    alert("تم إرسال طلب التجديد للإدارة بنجاح!");
   });
 }
 
