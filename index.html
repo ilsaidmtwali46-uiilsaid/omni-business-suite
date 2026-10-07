@@ -5,72 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام الكاشير والمبيعات</title>
   <link rel="stylesheet" href="c.css">
-  <style>
-    /* شاشة قفل التطبيق عند انتهاء الاشتراك */
-    #subscription-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.94);
-      z-index: 9999;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-    }
-    .modal-box {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    .btn-renew {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      margin-top: 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      width: 100%;
-      font-size: 15px;
-    }
-    .btn-renew:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
-    /* الشريط الدعائي اللحظي */
-    #ad-banner-bar {
-      display: none;
-      background: #ffc107;
-      color: #000;
-      padding: 8px 0;
-      font-weight: bold;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .marquee {
-      display: inline-block;
-      animation: marquee 14s linear infinite;
-    }
-    @keyframes marquee {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-  </style>
 </head>
 <body>
 
   <!-- الهيدر العلوي -->
-  <header style="display: flex; justify-content: space-between; padding: 15px; background: #111; color: #fff; border-bottom: 1px solid #333;">
-    <div>نظام الكاشير والمبيعات</div>
-    <div id="client-display-code" style="color: #ffc107; font-weight: bold;">الكود: جاري التحميل...</div>
+  <header class="app-header">
+    <div class="header-title">نظام الكاشير والمبيعات</div>
+    <div id="client-display-code" class="header-code">الكود: جاري التحميل...</div>
   </header>
 
   <!-- الشريط الدعائي اللحظي -->
@@ -78,20 +19,80 @@
     <div class="marquee" id="ad-banner-text"></div>
   </div>
 
-  <!-- الواجهة الرئيسية عند تفعيل الاشتراك -->
-  <main style="padding: 20px; color: #fff;">
-    <div style="background: #1e1e1e; padding: 25px; border-radius: 8px; text-align: center; border: 1px solid #333;">
-      <h2>مرحباً بك في منظومة العمل</h2>
-      <p style="color: #28a745; font-size: 18px; font-weight: bold;">البرنامج يعمل بنجاح والاشتراك ساري.</p>
-    </div>
+  <!-- واجهة الكاشير الرئيسية -->
+  <main class="pos-container">
+    
+    <!-- قسم إضافة وعرض الأصناف -->
+    <section class="pos-section">
+      <h3 class="section-title text-blue">إدارة المنتجات والأصناف</h3>
+      <input type="text" id="prod-name" placeholder="اسم المنتج">
+      <input type="number" id="prod-price" placeholder="السعر (ج.م)">
+      <input type="text" id="prod-code" placeholder="البار كود / الكود (اختياري)">
+      <button class="btn-primary" onclick="addNewProduct()">إضافة المنتج إلى المخزن</button>
+
+      <h4>قائمة الأصناف المتاحة</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>المنتج</th>
+            <th>السعر</th>
+            <th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="products-table-body"></tbody>
+      </table>
+    </section>
+
+    <!-- قسم سلة الفاتورة الحالية -->
+    <section class="pos-section">
+      <h3 class="section-title text-green">فاتورة مبيعات جديدة</h3>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>الصنف</th>
+            <th>العدد</th>
+            <th>الإجمالي</th>
+            <th>حذف</th>
+          </tr>
+        </thead>
+        <tbody id="cart-table-body"></tbody>
+      </table>
+
+      <div class="total-box">
+        <h4>الإجمالي الكلي: <span id="cart-total" class="text-green">0.00</span> ج.م</h4>
+      </div>
+
+      <button class="btn-success btn-large" onclick="checkoutAndPrint()">إتمام البيع وطباعة الفاتورة 🖨️</button>
+    </section>
+
   </main>
 
-  <!-- نافذة قفل التطبيق وطلب التجديد -->
+  <!-- قالب الطباعة الحرارية المخصص للطابعة (80mm) -->
+  <div id="printable-receipt">
+    <h3 id="receipt-store-name">سوبر ماركت الأمل</h3>
+    <p id="receipt-date"></p>
+    <hr class="dashed-hr">
+    <table>
+      <thead>
+        <tr>
+          <th>الصنف</th>
+          <th>العدد</th>
+          <th>السعر</th>
+        </tr>
+      </thead>
+      <tbody id="receipt-items-body"></tbody>
+    </table>
+    <hr class="dashed-hr">
+    <h4 class="receipt-total-text">المجموع: <span id="receipt-total">0.00</span> ج.م</h4>
+    <p class="receipt-footer">شكراً لزيارتكم!</p>
+  </div>
+
+  <!-- شاشة قفل التطبيق عند انتهاء الاشتراك -->
   <div id="subscription-overlay">
     <div class="modal-box">
-      <h3 style="color: #ff4d4d; margin-top:0;">تنبيه الاشتراك</h3>
+      <h3 class="text-red">تنبيه الاشتراك</h3>
       <p id="subscription-msg">جاري فحص حالة الاشتراك...</p>
-      
       <button id="renew-btn" class="btn-renew" onclick="requestRenewal('تجديد شهري', 30)">إرسال طلب تجديد الاشتراك (30 يوم)</button>
     </div>
   </div>
@@ -100,7 +101,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <!-- ملف كود العميل -->
+  <!-- ملف المنطق الخاص بالعميل -->
   <script src="Client_app.js"></script>
 
 </body>
