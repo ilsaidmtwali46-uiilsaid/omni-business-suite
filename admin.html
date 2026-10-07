@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم مالك المنظومة</title>
+  <link rel="stylesheet" href="c.css">
+</head>
+<body class="admin-body">
+
+  <h2 class="admin-main-title">لوحة تحكم مالك المنظومة</h2>
+
+  <!-- أزرار التنقل بين التبويبات -->
+  <div class="nav-tabs">
+    <button class="tab-btn-clients" onclick="showSection('clients')">إدارة المشتركين</button>
+    <button class="tab-btn-requests" onclick="showSection('requests')">طلبات التجديد</button>
+    <button class="tab-btn-banner" onclick="showSection('banner')">الشريط الدعائي</button>
+  </div>
+
+  <!-- تبويب إدارة المشتركين -->
+  <div id="sec-clients">
+    <div class="card">
+      <h3 class="section-title text-blue">إضافة عميل جديد</h3>
+      <label>اسم العميل / التجاري:</label>
+      <input type="text" id="client-name" placeholder="مثال: سوبر ماركت الأمل">
+      
+      <label>كود العميل / الجهاز:</label>
+      <input type="text" id="client-code" placeholder="مثال: CLI-101">
+      
+      <label>مدة الاشتراك الأولى:</label>
+      <select id="client-plan">
+        <option value="7">تجريبي (7 أيام)</option>
+        <option value="30" selected>شهري (30 يوم)</option>
+        <option value="365">سنوي (365 يوم)</option>
+      </select>
+
+      <button class="btn-primary btn-full" onclick="addClient()">إضافة العميل وتفعيل الاشتراك</button>
+    </div>
+
+    <div class="card">
+      <h3>سجل العملاء والمشتركين</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>كود العميل</th>
+            <th>اسم العميل</th>
+            <th>تاريخ الانتهاء</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="clients-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- تبويب طلبات التجديد -->
+  <div id="sec-requests" style="display: none;">
+    <div class="card">
+      <h3 class="section-title text-purple">طلبات التجديد الواردة</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>العميل</th>
+            <th>الباقة</th>
+            <th>التاريخ</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="requests-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- تبويب الشريط الدعائي -->
+  <div id="sec-banner" style="display: none;">
+    <div class="card">
+      <h3 class="section-title text-green">إرسال رسالة دعائية</h3>
+      <label>نص الإعلان:</label>
+      <textarea id="banner-text" rows="3" placeholder="اكتب النص هنا..."></textarea>
+
+      <label>التوجيه إلى:</label>
+      <select id="banner-target" onchange="toggleClientDropdown()">
+        <option value="ALL">جميع العملاء</option>
+        <option value="SPECIFIC">عميل محدد</option>
+      </select>
+
+      <div id="client-select-group" style="display: none;">
+        <label>اختر العميل:</label>
+        <select id="banner-client-select"></select>
+      </div>
+
+      <button class="btn-success btn-full" onclick="sendBannerMessage()">نشر الرسالة الدعائية</button>
+    </div>
+
+    <div class="card">
+      <h3>الإعلانات النشطة</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>المستهدف</th>
+            <th>نص الرسالة</th>
+            <th>التاريخ</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="banners-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- مكتبات Firebase SDK v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- ملف المنطق الخاص باللوحة -->
+  <script src="j.js"></script>
+
+</body>
+</html>
