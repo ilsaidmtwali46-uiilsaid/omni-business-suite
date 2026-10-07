@@ -1,5 +1,5 @@
 // ==========================================
-// j.js - كود تطبيق العميل (محدث للمستودع omni-business-suite)
+// j.js - منطق لوحة تحكم الأدمن
 // ==========================================
 
 const firebaseConfig = {
@@ -18,105 +18,225 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-// تحديد كود الجهاز للعميل (الافتراضي CLI-101)
-const MY_CLIENT_CODE = localStorage.getItem('client_code') || 'CLI-101';
-
 document.addEventListener('DOMContentLoaded', () => {
-  // عرض كود الجهاز في أعلى الشاشة
-  const codeDisplay = document.getElementById('client-display-code');
-  if (codeDisplay) {
-    codeDisplay.textContent = `الكود: ${MY_CLIENT_CODE}`;
-  }
-
-  // بدء الاستماع اللحظي للتغييرات من السحابة
-  startLiveSync();
+  listenToData();
 });
 
-function startLiveSync() {
+function showSection(sectionId) {
+  document.getElementById('sec-clients').style.display = sectionId === 'clients' ? 'block' : 'none';
+  document.getElementById('sec-requests').style.display = sectionId === 'requests' ? 'block' : 'none';
+  document.getElementById('sec-banner').style.display = sectionId === 'banner' ? 'block' : 'none';
+}
+
+function toggleClientDropdown() {
+  const target = document.getElementById('banner-target').value;
+  document.getElementById('client-select-group').style.display = target === 'SPECIFIC' ? 'block' : 'none';
+}
+
+function listenToData() {
   db.ref('saas_data').on('value', (snapshot) => {
     const data = snapshot.val() || {};
-    const clientsObj = data.clients || {};
-    const bannersObj = data.banners || {};
-
-    // قراءة بيانات هذا العميل تحديداً باستخدام الكود
-    const myAccount = clientsObj[MY_CLIENT_CODE];
-
-    if (!myAccount) {
-      showSubscriptionModal(`هذا الجهاز (${MY_CLIENT_CODE}) غير مسجل بالنظام. يرجى التواصل مع الإدارة للتفعيل.`);
-      lockApp();
-      return;
-    }
-
-    localStorage.setItem('client_name', myAccount.name);
-
-    // التحقق من حالة وتاريخ الاشتراك
-    const now = Date.now();
-    if (now > myAccount.endTimestamp) {
-      showSubscriptionModal(`انتهت فترة الاشتراك بتاريخ (${myAccount.endDate}). يرجى طلب التجديد للاستمرار.`);
-      lockApp();
-    } else {
-      unlockApp();
-    }
-
-    // تحديث الشريط الدعائي اللحظي
-    updateBannerDisplay(bannersObj);
+    renderClients(data.clients || {});
+    renderRequests(data.requests || {});
+    renderBanners(data.banners || {});
   });
 }
 
-// تحديث شريط الإعلانات اللحظي
-function updateBannerDisplay(bannersObj) {
-  const bannerBar = document.getElementById('ad-banner-bar');
-  const bannerText = document.getElementById('ad-banner-text');
+// 1. إضافة عميل دون تكرار (باستخدام set برقم الكود)
+function addClient() {
+  const nameInput = document.getElementById('client-name');
+  const codeInput = document.getElementById('client-code');
+  const daysSelect = document.getElementById('client-plan');
 
-  if (!bannerBar || !bannerText) return;
+  const name = nameInput.value.trim();
+  const code = codeInput.value.trim().toUpperCase();
+  const days = parseInt(daysSelect.value);
 
-  const bannerKeys = Object.keys(bannersObj);
-  let activeText = '';
-
-  // البحث عن أحدث إعلان موجه لهذا العميل أو للجميع
-  for (let i = bannerKeys.length - 1; i >= 0; i--) {
-    const b = bannersObj[bannerKeys[i]];
-    if (b.target === 'ALL' || b.clientCode === MY_CLIENT_CODE) {
-      activeText = b.text;
-      break;
-    }
+  if (!name || !code) {
+    alert("يرجى إدخال اسم العميل وكود الجهاز!");
+    return;
   }
 
-  if (activeText) {
-    bannerText.textContent = activeText;
-    bannerBar.style.display = 'block';
-  } else {
-    bannerBar.style.display = 'none';
+  const now = Date.now();
+  const endTimestamp = now + (days * 24 * 60 * 60 * 1000);
+  const endDateStr = new Date(endTimestamp).toISOString().split('T')[0];
+
+  const clientData = {
+    name: name,
+    code: code,
+    endDate: endDateStr,
+    endTimestamp: endTimestamp,
+    status: 'active'
+  };
+
+  db.ref(`saas_data/clients/${code}`).set(clientData)
+    .then(() => {
+      alert("تمت إضافة العميل وتفعيل الاشتراك بنجاح!");
+      nameInput.value = '';
+      codeInput.value = '';
+    })
+    .catch((err) => alert("خطأ في الإضافة: " + err.message));
+}
+
+// 2. عرض سجل العملاء ومنح التمديد والحذف بالمفتاح الصريح
+function renderClients(clientsObj) {
+  const tbody = document.getElementById('clients-list');
+  const dropdown = document.getElementById('banner-client-select');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  if (dropdown) dropdown.innerHTML = '';
+
+  const keys = Object.keys(clientsObj);
+  if (keys.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد مشتركين حالياً</td></tr>';
+    return;
+  }
+
+  const now = Date.now();
+
+  keys.forEach((key) => {
+    const client = clientsObj[key];
+    const clientCode = client.code || key;
+    const isExpired = !client.endTimestamp || now > client.endTimestamp;
+
+    if (dropdown) {
+      const opt = document.createElement('option');
+      opt.value = clientCode;
+      opt.textContent = `${client.name || 'عميل'} (${clientCode})`;
+      dropdown.appendChild(opt);
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${clientCode}</b></td>
+      <td>${client.name || '-'}</td>
+      <td>${client.endDate || '-'}</td>
+      <td>
+        <span style="color: ${isExpired ? '#ff4d4d' : '#28a745'}; font-weight: bold;">
+          ${isExpired ? 'منتهي' : 'نشط'}
+        </span>
+      </td>
+      <td>
+        <button onclick="extendSubscription('${key}', 30)" class="btn-success btn-sm">+30 يوم</button>
+        <button onclick="deleteClient('${key}')" class="btn-danger btn-sm" style="margin-right: 4px;">حذف</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function extendSubscription(firebaseKey, addDays) {
+  db.ref(`saas_data/clients/${firebaseKey}`).once('value').then((snap) => {
+    const client = snap.val() || {};
+    const now = Date.now();
+    
+    const currentEnd = (client.endTimestamp && client.endTimestamp > now) ? client.endTimestamp : now;
+    const newEndTimestamp = currentEnd + (addDays * 24 * 60 * 60 * 1000);
+    const newEndDateStr = new Date(newEndTimestamp).toISOString().split('T')[0];
+
+    db.ref(`saas_data/clients/${firebaseKey}`).update({
+      code: client.code || firebaseKey,
+      name: client.name || 'عميل ' + firebaseKey,
+      endDate: newEndDateStr,
+      endTimestamp: newEndTimestamp,
+      status: 'active'
+    }).then(() => alert("تم تمديد الاشتراك بنجاح!"));
+  });
+}
+
+function deleteClient(firebaseKey) {
+  if (!firebaseKey) return;
+
+  if (confirm("هل أنت متأكد من حذف هذا العميل نهائياً؟")) {
+    db.ref(`saas_data/clients/${firebaseKey}`).remove()
+      .then(() => alert("تم حذف العميل بنجاح من قاعدة البيانات."))
+      .catch((err) => alert("فشل الحذف: " + err.message));
   }
 }
 
-// إرسال طلب تجديد للأدمن
-function requestRenewal(planName, days) {
-  const clientName = localStorage.getItem('client_name') || MY_CLIENT_CODE;
+// 3. طلبات التجديد
+function renderRequests(reqObj) {
+  const tbody = document.getElementById('requests-list');
+  if (!tbody) return;
+  tbody.innerHTML = '';
 
-  db.ref('saas_data/requests').push({
-    clientCode: MY_CLIENT_CODE,
-    clientName: clientName,
-    planName: planName,
-    days: days,
+  const keys = Object.keys(reqObj);
+  if (keys.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد طلبات جديدة</td></tr>';
+    return;
+  }
+
+  keys.forEach((key) => {
+    const req = reqObj[key];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${req.clientName} (${req.clientCode})</td>
+      <td>${req.planName}</td>
+      <td>${req.date}</td>
+      <td>
+        <button onclick="approveRequest('${key}', '${req.clientCode}', ${req.days || 30})" class="btn-success btn-sm">موافقة وتفعيل</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function approveRequest(reqKey, clientCode, days) {
+  extendSubscription(clientCode, days);
+  db.ref(`saas_data/requests/${reqKey}`).remove();
+}
+
+// 4. الإعلانات
+function sendBannerMessage() {
+  const textInput = document.getElementById('banner-text');
+  const text = textInput.value.trim();
+  const target = document.getElementById('banner-target').value;
+  const clientCode = target === 'SPECIFIC' ? document.getElementById('banner-client-select').value : 'ALL';
+
+  if (!text) {
+    alert("يرجى كتابة نص الإعلان!");
+    return;
+  }
+
+  db.ref('saas_data/banners').push({
+    text: text,
+    target: target,
+    clientCode: clientCode,
     date: new Date().toLocaleDateString('ar-EG'),
     timestamp: Date.now()
   }).then(() => {
-    alert("تم إرسال طلب التجديد للإدارة بنجاح!");
+    alert("تم نشر الإعلان بنجاح!");
+    textInput.value = '';
   });
 }
 
-function lockApp() {
-  const overlay = document.getElementById('subscription-overlay');
-  if (overlay) overlay.style.display = 'flex';
+function renderBanners(bannersObj) {
+  const tbody = document.getElementById('banners-list');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const keys = Object.keys(bannersObj);
+  if (keys.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد إعلانات نشطة</td></tr>';
+    return;
+  }
+
+  keys.forEach((key) => {
+    const b = bannersObj[key];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${b.target === 'ALL' ? 'الجميع' : b.clientCode}</td>
+      <td>${b.text}</td>
+      <td>${b.date}</td>
+      <td>
+        <button onclick="deleteBanner('${key}')" class="btn-danger btn-sm">حذف</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-function unlockApp() {
-  const overlay = document.getElementById('subscription-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
-
-function showSubscriptionModal(msg) {
-  const msgElement = document.getElementById('subscription-msg');
-  if (msgElement) msgElement.textContent = msg;
+function deleteBanner(key) {
+  db.ref(`saas_data/banners/${key}`).remove();
 }
