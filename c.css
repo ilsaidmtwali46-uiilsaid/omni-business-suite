@@ -1,141 +1,248 @@
-:root {
-  --bg-main: #0f172a;
-  --bg-card: #1e293b;
-  --bg-input: #090d16;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary: #475569;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: #334155;
-  --success: #16a34a;
-  --danger: #dc2626;
-  --radius: 10px;
-}
+/* ==========================================
+   c.css - التنسيقات العامة والتجاوب والطباعة
+   ========================================== */
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: var(--bg-main) !important;
-  color: var(--text-main) !important;
-  direction: rtl;
-  min-height: 100vh;
-  padding: 12px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #121212;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
 }
 
-.container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-}
-
-.header-box {
+/* الهيدر العلوي */
+.app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 15px 20px;
+  background-color: #111111;
+  border-bottom: 1px solid #333333;
 }
 
-.status-tag {
-  color: var(--text-muted);
-  font-size: 13px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 4px 8px;
-  border-radius: 4px;
+.header-title {
+  font-weight: bold;
+  font-size: 18px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+.header-code {
+  color: #ffc107;
+  font-weight: bold;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 15px;
+/* الشريط الدعائي */
+#ad-banner-bar {
+  display: none;
+  background-color: #ffc107;
+  color: #000000;
+  padding: 8px 0;
+  font-weight: bold;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.input-group label {
-  display: block;
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 5px;
+.marquee {
+  display: inline-block;
+  animation: marquee 12s linear infinite;
 }
 
-input, select {
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* شاشة الكاشير والبطاقات */
+.pos-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px;
+}
+
+.pos-section, .card {
+  background-color: #1e1e1e;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 15px;
+  flex: 1;
+  min-width: 300px;
+  margin-bottom: 15px;
+}
+
+/* المدخلات والأزرار */
+input, select, textarea {
   width: 100%;
   padding: 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  margin: 6px 0 14px;
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #444444;
   border-radius: 6px;
-  color: var(--text-main);
-  font-size: 14px;
-  outline: none;
 }
 
-input:focus {
-  border-color: var(--primary);
-}
-
-button, .btn {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  font-weight: 600;
+button {
   cursor: pointer;
-  width: 100%;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  color: #ffffff;
 }
 
-.btn-secondary { background: var(--secondary); }
-.btn-success { background: var(--success); }
+.btn-primary { background-color: #007bff; }
+.btn-success { background-color: #28a745; }
+.btn-danger { background-color: #dc3545; }
+.btn-full { width: 100%; padding: 12px; }
+.btn-large { width: 100%; padding: 14px; font-size: 16px; margin-top: 15px; }
+.btn-sm { padding: 4px 8px; font-size: 13px; }
 
-.submit-btn {
-  margin-top: 15px;
-}
-
-.table-box {
-  width: 100%;
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
+/* الجداول */
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
 th, td {
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-  text-align: right;
+  border: 1px solid #333333;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
 }
 
 th {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-muted);
+  background-color: #2a2a2a;
 }
 
-@media (max-width: 600px) {
-  .grid {
-    grid-template-columns: 1fr;
+/* نصوص التمييز */
+.text-blue { color: #007bff; }
+.text-green { color: #28a745; }
+.text-red { color: #ff4d4d; }
+.text-purple { color: #6f42c1; }
+
+.section-title {
+  margin-top: 0;
+}
+
+.total-box {
+  margin-top: 15px;
+  background-color: #2a2a2a;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+/* نافذة القفل */
+#subscription-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.modal-box {
+  background-color: #1e1e1e;
+  border: 1px solid #333333;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.btn-renew {
+  background-color: #28a745;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.btn-renew:disabled {
+  background-color: #555555;
+  cursor: not-allowed;
+}
+
+/* الأدمن */
+.admin-body {
+  padding: 15px;
+}
+
+.admin-main-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.nav-tabs button {
+  flex: 1;
+  padding: 12px;
+}
+
+.tab-btn-clients { background-color: #007bff; }
+.tab-btn-requests { background-color: #6f42c1; }
+.tab-btn-banner { background-color: #28a745; }
+
+/* قالب الفاتورة الحرارية */
+#printable-receipt {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    color: #000000;
+    background-color: #ffffff;
+    padding: 10px;
+    font-family: monospace;
+  }
+  #printable-receipt table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #000000;
+  }
+  #printable-receipt th, #printable-receipt td {
+    border: 1px solid #000000;
+    padding: 4px;
+    font-size: 12px;
+  }
+  .dashed-hr {
+    border: none;
+    border-top: 1px dashed #000000;
+  }
+  .receipt-total-text {
+    text-align: right;
+    margin: 5px 0;
+  }
+  .receipt-footer {
+    text-align: center;
+    font-size: 10px;
+    margin-top: 10px;
   }
 }
